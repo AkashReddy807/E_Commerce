@@ -2,5 +2,7 @@
   "name": "E-Commerce Store",
   "description": "Full-stack e-commerce web application with PostgreSQL database integration, product catalog, search & filtering, cart & checkout, order tracking, and admin inventory management.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
