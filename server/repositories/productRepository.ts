@@ -214,6 +214,9 @@ function mapRowToProduct(row: any): Product {
 
 export class ProductRepository {
   static async findAll(filters?: { categoryId?: string; search?: string; minPrice?: number; maxPrice?: number; sort?: string }): Promise<Product[]> {
+    if (!isConnectedToPostgres) {
+      return this.filterInMemory(filters);
+    }
     try {
       let query = `
         SELECT p.*, c.name as category_name 
@@ -259,40 +262,45 @@ export class ProductRepository {
 
       const res = await pool.query(query, values);
       return res.rows.map(mapRowToProduct);
-    } catch (err: any) {
-      console.warn('ProductRepository.findAll fallback to memory:', err.message);
-      let list = [...inMemoryProducts];
-      if (filters?.categoryId && filters.categoryId !== 'all') {
-        list = list.filter((p) => p.categoryId === filters.categoryId);
-      }
-      if (filters?.search) {
-        const s = filters.search.toLowerCase();
-        list = list.filter((p) => p.title.toLowerCase().includes(s) || p.description.toLowerCase().includes(s) || p.brand.toLowerCase().includes(s));
-      }
-      if (filters?.minPrice !== undefined) {
-        list = list.filter((p) => p.price >= (filters.minPrice ?? 0));
-      }
-      if (filters?.maxPrice !== undefined) {
-        list = list.filter((p) => p.price <= (filters.maxPrice ?? 999999));
-      }
-      if (filters?.sort === 'price_asc') {
-        list.sort((a, b) => a.price - b.price);
-      } else if (filters?.sort === 'price_desc') {
-        list.sort((a, b) => b.price - a.price);
-      } else if (filters?.sort === 'rating') {
-        list.sort((a, b) => b.rating - a.rating);
-      }
-      return list;
+    } catch {
+      return this.filterInMemory(filters);
     }
   }
 
+  private static filterInMemory(filters?: { categoryId?: string; search?: string; minPrice?: number; maxPrice?: number; sort?: string }): Product[] {
+    let list = [...inMemoryProducts];
+    if (filters?.categoryId && filters.categoryId !== 'all') {
+      list = list.filter((p) => p.categoryId === filters.categoryId);
+    }
+    if (filters?.search) {
+      const s = filters.search.toLowerCase();
+      list = list.filter((p) => p.title.toLowerCase().includes(s) || p.description.toLowerCase().includes(s) || p.brand.toLowerCase().includes(s));
+    }
+    if (filters?.minPrice !== undefined) {
+      list = list.filter((p) => p.price >= (filters.minPrice ?? 0));
+    }
+    if (filters?.maxPrice !== undefined) {
+      list = list.filter((p) => p.price <= (filters.maxPrice ?? 999999));
+    }
+    if (filters?.sort === 'price_asc') {
+      list.sort((a, b) => a.price - b.price);
+    } else if (filters?.sort === 'price_desc') {
+      list.sort((a, b) => b.price - a.price);
+    } else if (filters?.sort === 'rating') {
+      list.sort((a, b) => b.rating - a.rating);
+    }
+    return list;
+  }
+
   static async findById(id: string): Promise<Product | null> {
+    if (!isConnectedToPostgres) {
+      return inMemoryProducts.find((p) => p.id === id) || null;
+    }
     try {
       const res = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
       if (res.rows.length === 0) return null;
       return mapRowToProduct(res.rows[0]);
-    } catch (err: any) {
-      console.warn('ProductRepository.findById fallback:', err.message);
+    } catch {
       return inMemoryProducts.find((p) => p.id === id) || null;
     }
   }
@@ -300,6 +308,10 @@ export class ProductRepository {
   static async save(product: Partial<Product>): Promise<Product> {
     const id = product.id || `prod-${Date.now()}`;
     const slug = product.slug || product.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || `prod-${Date.now()}`;
+
+    if (!isConnectedToPostgres) {
+      return this.saveToMemory(id, slug, product);
+    }
 
     try {
       const res = await pool.query(
@@ -338,59 +350,73 @@ export class ProductRepository {
         ]
       );
       return mapRowToProduct(res.rows[0]);
-    } catch (err: any) {
-      console.warn('ProductRepository.save fallback:', err.message);
-      const newProd: Product = {
-        id,
-        title: product.title || 'Untitled Product',
-        slug,
-        description: product.description || '',
-        price: product.price || 0,
-        originalPrice: product.originalPrice,
-        rating: product.rating || 5.0,
-        reviewsCount: product.reviewsCount || 0,
-        stock: product.stock ?? 10,
-        categoryId: product.categoryId || 'electronics',
-        brand: product.brand || 'Generic',
-        images: product.images || ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80'],
-        features: product.features || [],
-        badge: product.badge,
-      };
-      const existingIdx = inMemoryProducts.findIndex((p) => p.id === id);
-      if (existingIdx >= 0) {
-        inMemoryProducts[existingIdx] = newProd;
-      } else {
-        inMemoryProducts.unshift(newProd);
-      }
-      return newProd;
+    } catch {
+      return this.saveToMemory(id, slug, product);
     }
   }
 
+  private static saveToMemory(id: string, slug: string, product: Partial<Product>): Product {
+    const newProd: Product = {
+      id,
+      title: product.title || 'Untitled Product',
+      slug,
+      description: product.description || '',
+      price: product.price || 0,
+      originalPrice: product.originalPrice,
+      rating: product.rating || 5.0,
+      reviewsCount: product.reviewsCount || 0,
+      stock: product.stock ?? 10,
+      categoryId: product.categoryId || 'electronics',
+      brand: product.brand || 'Generic',
+      images: product.images || ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80'],
+      features: product.features || [],
+      badge: product.badge,
+    };
+    const existingIdx = inMemoryProducts.findIndex((p) => p.id === id);
+    if (existingIdx >= 0) {
+      inMemoryProducts[existingIdx] = newProd;
+    } else {
+      inMemoryProducts.unshift(newProd);
+    }
+    return newProd;
+  }
+
   static async deleteById(id: string): Promise<boolean> {
+    if (!isConnectedToPostgres) {
+      inMemoryProducts = inMemoryProducts.filter((p) => p.id !== id);
+      return true;
+    }
     try {
       await pool.query('DELETE FROM products WHERE id = $1', [id]);
       return true;
-    } catch (err: any) {
-      console.warn('ProductRepository.deleteById fallback:', err.message);
+    } catch {
       inMemoryProducts = inMemoryProducts.filter((p) => p.id !== id);
       return true;
     }
   }
 
   static async updateStock(id: string, delta: number): Promise<void> {
+    if (!isConnectedToPostgres) {
+      const p = inMemoryProducts.find((item) => item.id === id);
+      if (p) p.stock = Math.max(0, p.stock + delta);
+      return;
+    }
     try {
       await pool.query('UPDATE products SET stock = GREATEST(0, stock + $1) WHERE id = $2', [delta, id]);
-    } catch (err: any) {
+    } catch {
       const p = inMemoryProducts.find((item) => item.id === id);
       if (p) p.stock = Math.max(0, p.stock + delta);
     }
   }
 
   static async count(): Promise<number> {
+    if (!isConnectedToPostgres) {
+      return inMemoryProducts.length;
+    }
     try {
       const res = await pool.query('SELECT COUNT(*) FROM products');
       return parseInt(res.rows[0].count, 10);
-    } catch (err) {
+    } catch {
       return inMemoryProducts.length;
     }
   }

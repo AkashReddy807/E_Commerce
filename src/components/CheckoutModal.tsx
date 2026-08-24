@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ShieldCheck, CreditCard, QrCode, Banknote, CheckCircle, PackageCheck, Copy, Sparkles, Loader2, ArrowRight } from 'lucide-react';
+import { X, ShieldCheck, CreditCard, QrCode, Banknote, CheckCircle, PackageCheck, Copy, Loader2, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CartItem, Coupon, Order } from '../types';
 import { api } from '../services/api';
@@ -103,233 +103,232 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-zinc-950/70 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
-      <div className="relative bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-zinc-200 overflow-hidden">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#111111]/70 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
+      <div className="relative bg-[#ffffff] max-w-2xl w-full border border-[#f0f0f0] shadow-2xl overflow-hidden">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 transition z-20"
+          className="absolute top-4 right-4 p-2 text-[#999999] hover:text-[#111111] transition z-20"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5 stroke-[1.5]" />
         </button>
 
         {completedOrder ? (
           /* Order Confirmation View */
-          <div className="p-6 sm:p-10 text-center space-y-6">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
-              <CheckCircle className="w-10 h-10" />
+          <div className="p-8 sm:p-12 text-center space-y-6">
+            <div className="w-14 h-14 border border-[#111111] text-[#111111] flex items-center justify-center mx-auto">
+              <CheckCircle className="w-7 h-7 stroke-[1.5]" />
             </div>
 
             <div className="space-y-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
-                <Sparkles className="w-3.5 h-3.5" />
-                Saved to Supabase PostgreSQL
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900">
-                Order Confirmed!
+              <div className="text-[10px] uppercase tracking-[0.25em] text-[#999999]">
+                POSTGRES TRANSACTION SUCCESSFUL
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-light tracking-tight text-[#111111]">
+                Order Confirmed.
               </h2>
-              <p className="text-xs sm:text-sm text-zinc-600 max-w-md mx-auto">
-                Thank you, <span className="font-semibold text-zinc-800">{completedOrder.customerName}</span>. Your order has been placed and inventory deducted from the database.
+              <p className="text-xs sm:text-sm text-[#666666] max-w-md mx-auto leading-relaxed">
+                Thank you, <span className="font-medium text-[#111111]">{completedOrder.customerName}</span>. Your record is committed to PostgreSQL and inventory deducted.
               </p>
             </div>
 
             {/* Order Details Card */}
-            <div className="p-5 rounded-2xl bg-zinc-50 border border-zinc-200 text-left space-y-3">
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
+            <div className="p-6 bg-[#fafafa] border border-[#f0f0f0] text-left space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#f0f0f0]">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-zinc-400">Order ID Reference</span>
-                  <div className="font-mono font-bold text-sm text-zinc-900">{completedOrder.id}</div>
+                  <span className="text-[9px] uppercase tracking-widest text-[#999999]">Order Reference</span>
+                  <div className="font-mono text-xs font-semibold text-[#111111]">{completedOrder.id}</div>
                 </div>
                 <button
                   onClick={copyOrderId}
-                  className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2.5 py-1.5 rounded-lg border border-indigo-100 transition"
+                  className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-medium text-[#111111] bg-[#ffffff] px-3 py-1.5 border border-[#e5e5e5] hover:border-[#111111] transition"
                 >
                   <Copy className="w-3.5 h-3.5" />
-                  <span>{copiedId ? 'Copied!' : 'Copy ID'}</span>
+                  <span>{copiedId ? 'Copied' : 'Copy'}</span>
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="grid grid-cols-2 gap-4 text-xs">
                 <div>
-                  <span className="text-zinc-400 block text-[11px]">Shipping To</span>
-                  <span className="font-medium text-zinc-800">{completedOrder.shippingAddress}, {completedOrder.city}</span>
+                  <span className="text-[#999999] block text-[10px] uppercase tracking-widest">Shipping To</span>
+                  <span className="font-medium text-[#111111]">{completedOrder.shippingAddress}, {completedOrder.city}</span>
                 </div>
                 <div>
-                  <span className="text-zinc-400 block text-[11px]">Payment</span>
-                  <span className="font-medium text-zinc-800">{completedOrder.paymentMethod} ({completedOrder.paymentStatus})</span>
+                  <span className="text-[#999999] block text-[10px] uppercase tracking-widest">Payment</span>
+                  <span className="font-medium text-[#111111]">{completedOrder.paymentMethod} ({completedOrder.paymentStatus})</span>
                 </div>
                 <div>
-                  <span className="text-zinc-400 block text-[11px]">Items Ordered</span>
-                  <span className="font-medium text-zinc-800">{completedOrder.items?.length || 1} Products</span>
+                  <span className="text-[#999999] block text-[10px] uppercase tracking-widest">Objects</span>
+                  <span className="font-medium text-[#111111]">{completedOrder.items?.length || 1} Items</span>
                 </div>
                 <div>
-                  <span className="text-zinc-400 block text-[11px]">Total Paid</span>
-                  <span className="font-bold text-indigo-600">${completedOrder.totalAmount?.toFixed(2)}</span>
+                  <span className="text-[#999999] block text-[10px] uppercase tracking-widest">Total Settled</span>
+                  <span className="font-mono font-semibold text-[#111111]">${completedOrder.totalAmount?.toFixed(2)} USD</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            <div className="pt-2">
               <button
                 onClick={onClose}
-                className="bg-zinc-900 hover:bg-indigo-600 text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shadow-md"
+                className="bg-[#111111] hover:bg-[#333333] text-white text-xs uppercase tracking-widest px-8 py-3.5 font-medium transition rounded-none"
               >
-                Continue Shopping
+                Return to Collection
               </button>
             </div>
           </div>
         ) : (
           /* Checkout Form View */
-          <form onSubmit={handleSubmitOrder} className="p-6 sm:p-8 space-y-6">
-            <div className="border-b border-zinc-200 pb-4">
-              <h2 className="text-xl font-bold text-zinc-900">Secure Checkout</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                Complete your details to place the order in Supabase PostgreSQL
+          <form onSubmit={handleSubmitOrder} className="p-6 sm:p-10 space-y-6">
+            <div className="border-b border-[#f0f0f0] pb-4">
+              <h2 className="text-xl font-light tracking-tight text-[#111111]">Checkout Verification</h2>
+              <p className="text-xs text-[#999999] mt-0.5 uppercase tracking-wider">
+                Direct write to Supabase PostgreSQL schema
               </p>
             </div>
 
             {errorMessage && (
-              <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200">
+              <div className="p-3 bg-[#fafafa] text-[#111111] text-xs border border-[#111111]">
                 {errorMessage}
               </div>
             )}
 
             {/* Step 1: Customer & Shipping Information */}
             <div className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                <PackageCheck className="w-4 h-4 text-indigo-600" />
-                Shipping & Contact Information
+              <h3 className="text-[10px] uppercase tracking-[0.2em] font-medium text-[#999999] flex items-center gap-1.5">
+                <PackageCheck className="w-3.5 h-3.5 text-[#111111]" />
+                Shipping Destination & Contact
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-700 mb-1">Full Name</label>
+                  <label className="block text-[10px] uppercase tracking-widest text-[#666666] mb-1">Full Name</label>
                   <input
                     type="text"
                     required
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-xl border border-zinc-200 focus:border-indigo-500 outline-none"
+                    className="w-full text-xs p-2.5 bg-[#fafafa] border border-[#e5e5e5] focus:border-[#111111] outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-700 mb-1">Email Address</label>
+                  <label className="block text-[10px] uppercase tracking-widest text-[#666666] mb-1">Email Address</label>
                   <input
                     type="email"
                     required
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-xl border border-zinc-200 focus:border-indigo-500 outline-none"
+                    className="w-full text-xs p-2.5 bg-[#fafafa] border border-[#e5e5e5] focus:border-[#111111] outline-none"
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-zinc-700 mb-1">Street Address</label>
+                  <label className="block text-[10px] uppercase tracking-widest text-[#666666] mb-1">Street Address</label>
                   <input
                     type="text"
                     required
                     value={shippingAddress}
                     onChange={(e) => setShippingAddress(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-xl border border-zinc-200 focus:border-indigo-500 outline-none"
+                    className="w-full text-xs p-2.5 bg-[#fafafa] border border-[#e5e5e5] focus:border-[#111111] outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-700 mb-1">City, State / Region</label>
+                  <label className="block text-[10px] uppercase tracking-widest text-[#666666] mb-1">City, State / Region</label>
                   <input
                     type="text"
                     required
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-xl border border-zinc-200 focus:border-indigo-500 outline-none"
+                    className="w-full text-xs p-2.5 bg-[#fafafa] border border-[#e5e5e5] focus:border-[#111111] outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-700 mb-1">Postal Code</label>
+                  <label className="block text-[10px] uppercase tracking-widest text-[#666666] mb-1">Postal Code</label>
                   <input
                     type="text"
                     required
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-xl border border-zinc-200 focus:border-indigo-500 outline-none"
+                    className="w-full text-xs p-2.5 bg-[#fafafa] border border-[#e5e5e5] focus:border-[#111111] outline-none"
                   />
                 </div>
               </div>
             </div>
 
             {/* Step 2: Payment Method */}
-            <div className="space-y-3 pt-2 border-t border-zinc-200">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                <CreditCard className="w-4 h-4 text-indigo-600" />
-                Payment Method
+            <div className="space-y-3 pt-4 border-t border-[#f0f0f0]">
+              <h3 className="text-[10px] uppercase tracking-[0.2em] font-medium text-[#999999] flex items-center gap-1.5">
+                <CreditCard className="w-3.5 h-3.5 text-[#111111]" />
+                Payment Instrument
               </h3>
 
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('Credit Card')}
-                  className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1.5 transition ${
+                  className={`p-3 border text-xs uppercase tracking-widest font-medium flex flex-col items-center gap-1.5 transition ${
                     paymentMethod === 'Credit Card'
-                      ? 'border-indigo-600 bg-indigo-50/70 text-indigo-900 shadow-xs'
-                      : 'border-zinc-200 hover:bg-zinc-50 text-zinc-700'
+                      ? 'border-[#111111] bg-[#111111] text-white'
+                      : 'border-[#e5e5e5] bg-[#ffffff] text-[#666666] hover:border-[#111111]'
                   }`}
                 >
-                  <CreditCard className="w-4 h-4" />
+                  <CreditCard className="w-4 h-4 stroke-[1.5]" />
                   <span>Card</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('UPI / QR')}
-                  className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1.5 transition ${
+                  className={`p-3 border text-xs uppercase tracking-widest font-medium flex flex-col items-center gap-1.5 transition ${
                     paymentMethod === 'UPI / QR'
-                      ? 'border-indigo-600 bg-indigo-50/70 text-indigo-900 shadow-xs'
-                      : 'border-zinc-200 hover:bg-zinc-50 text-zinc-700'
+                      ? 'border-[#111111] bg-[#111111] text-white'
+                      : 'border-[#e5e5e5] bg-[#ffffff] text-[#666666] hover:border-[#111111]'
                   }`}
                 >
-                  <QrCode className="w-4 h-4" />
+                  <QrCode className="w-4 h-4 stroke-[1.5]" />
                   <span>UPI / QR</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('Cash on Delivery')}
-                  className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1.5 transition ${
+                  className={`p-3 border text-xs uppercase tracking-widest font-medium flex flex-col items-center gap-1.5 transition ${
                     paymentMethod === 'Cash on Delivery'
-                      ? 'border-indigo-600 bg-indigo-50/70 text-indigo-900 shadow-xs'
-                      : 'border-zinc-200 hover:bg-zinc-50 text-zinc-700'
+                      ? 'border-[#111111] bg-[#111111] text-white'
+                      : 'border-[#e5e5e5] bg-[#ffffff] text-[#666666] hover:border-[#111111]'
                   }`}
                 >
-                  <Banknote className="w-4 h-4" />
+                  <Banknote className="w-4 h-4 stroke-[1.5]" />
                   <span>COD</span>
                 </button>
               </div>
 
               {paymentMethod === 'Credit Card' && (
-                <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 grid grid-cols-3 gap-2">
+                <div className="p-4 bg-[#fafafa] border border-[#f0f0f0] grid grid-cols-3 gap-3">
                   <div className="col-span-3">
-                    <label className="block text-[11px] text-zinc-500 mb-1">Card Number</label>
+                    <label className="block text-[10px] uppercase tracking-widest text-[#999999] mb-1">Card Number</label>
                     <input
                       type="text"
                       value={cardNumber}
                       onChange={(e) => setCardNumber(e.target.value)}
-                      className="w-full text-xs p-2 rounded-lg bg-white border border-zinc-200 font-mono outline-none"
+                      className="w-full text-xs p-2 bg-[#ffffff] border border-[#e5e5e5] font-mono outline-none"
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[11px] text-zinc-500 mb-1">Expiry</label>
+                    <label className="block text-[10px] uppercase tracking-widest text-[#999999] mb-1">Expiry</label>
                     <input
                       type="text"
                       value={cardExpiry}
                       onChange={(e) => setCardExpiry(e.target.value)}
-                      className="w-full text-xs p-2 rounded-lg bg-white border border-zinc-200 font-mono outline-none"
+                      className="w-full text-xs p-2 bg-[#ffffff] border border-[#e5e5e5] font-mono outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-zinc-500 mb-1">CVC</label>
+                    <label className="block text-[10px] uppercase tracking-widest text-[#999999] mb-1">CVC</label>
                     <input
                       type="text"
                       value={cardCvc}
                       onChange={(e) => setCardCvc(e.target.value)}
-                      className="w-full text-xs p-2 rounded-lg bg-white border border-zinc-200 font-mono outline-none"
+                      className="w-full text-xs p-2 bg-[#ffffff] border border-[#e5e5e5] font-mono outline-none"
                     />
                   </div>
                 </div>
@@ -337,14 +336,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
 
             {/* Order Total & Submit */}
-            <div className="pt-4 border-t border-zinc-200 space-y-3">
+            <div className="pt-4 border-t border-[#f0f0f0] space-y-4">
               <div className="flex justify-between items-baseline">
-                <span className="text-xs text-zinc-500">
-                  {cartItems.length} items • Free warranty included
+                <span className="text-xs text-[#999999]">
+                  {cartItems.length} objects • 2-year warranty included
                 </span>
                 <div className="text-right">
-                  <span className="text-xs text-zinc-400 mr-2">Grand Total:</span>
-                  <span className="text-xl font-extrabold text-indigo-600">${totalAmount.toFixed(2)}</span>
+                  <span className="text-xs uppercase tracking-wider text-[#999999] mr-2">Total Amount:</span>
+                  <span className="text-xl font-light font-mono text-[#111111]">${totalAmount.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -352,24 +351,24 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 id="checkout-confirm-btn"
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-zinc-900 hover:bg-indigo-600 text-white font-semibold py-3.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-zinc-900/10"
+                className="w-full bg-[#111111] hover:bg-[#333333] text-white py-3.5 px-4 text-xs uppercase tracking-widest font-medium transition flex items-center justify-center gap-2 rounded-none"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processing in Supabase PostgreSQL...</span>
+                    <span>Writing to Postgres...</span>
                   </>
                 ) : (
                   <>
-                    <span>Place Order (${totalAmount.toFixed(2)})</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <span>Confirm Order (${totalAmount.toFixed(2)} USD)</span>
+                    <ArrowRight className="w-3.5 h-3.5 stroke-[1.75]" />
                   </>
                 )}
               </button>
 
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-zinc-400">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Spring Boot REST Controller executes transaction on PostgreSQL database</span>
+              <div className="flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-widest text-[#999999]">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#111111]" />
+                <span>Spring Boot JPA executes commit to Supabase</span>
               </div>
             </div>
           </form>
@@ -378,3 +377,4 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     </div>
   );
 };
+

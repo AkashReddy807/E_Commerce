@@ -1,4 +1,4 @@
-import { pool } from '../db.js';
+import { pool, isConnectedToPostgres } from '../db.js';
 import { Review } from '../../src/types.js';
 
 let inMemoryReviews: Review[] = [
@@ -38,6 +38,9 @@ let inMemoryReviews: Review[] = [
 
 export class ReviewRepository {
   static async findByProductId(productId: string): Promise<Review[]> {
+    if (!isConnectedToPostgres) {
+      return inMemoryReviews.filter((r) => r.productId === productId);
+    }
     try {
       const res = await pool.query('SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC', [productId]);
       return res.rows.map((row) => ({
@@ -48,12 +51,24 @@ export class ReviewRepository {
         comment: row.comment,
         createdAt: row.created_at,
       }));
-    } catch (err: any) {
+    } catch {
       return inMemoryReviews.filter((r) => r.productId === productId);
     }
   }
 
   static async create(productId: string, userName: string, rating: number, comment: string): Promise<Review> {
+    if (!isConnectedToPostgres) {
+      const newRev: Review = {
+        id: inMemoryReviews.length + 1,
+        productId,
+        userName,
+        rating,
+        comment,
+        createdAt: new Date().toISOString(),
+      };
+      inMemoryReviews.unshift(newRev);
+      return newRev;
+    }
     try {
       const res = await pool.query(
         'INSERT INTO reviews (product_id, user_name, rating, comment) VALUES ($1, $2, $3, $4) RETURNING *',
@@ -77,7 +92,7 @@ export class ReviewRepository {
         comment: row.comment,
         createdAt: row.created_at,
       };
-    } catch (err: any) {
+    } catch {
       const newRev: Review = {
         id: inMemoryReviews.length + 1,
         productId,
@@ -92,11 +107,15 @@ export class ReviewRepository {
   }
 
   static async count(): Promise<number> {
+    if (!isConnectedToPostgres) {
+      return inMemoryReviews.length;
+    }
     try {
       const res = await pool.query('SELECT COUNT(*) FROM reviews');
       return parseInt(res.rows[0].count, 10);
-    } catch (err) {
+    } catch {
       return inMemoryReviews.length;
     }
   }
 }
+

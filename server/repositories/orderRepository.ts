@@ -1,4 +1,4 @@
-import { pool } from '../db.js';
+import { pool, isConnectedToPostgres } from '../db.js';
 import { Order, OrderItem } from '../../src/types.js';
 
 let inMemoryOrders: Order[] = [];
@@ -26,6 +26,10 @@ function mapRowToOrder(row: any, items: OrderItem[] = []): Order {
 export class OrderRepository {
   static async create(order: Partial<Order>): Promise<Order> {
     const id = order.id || `ORD-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    if (!isConnectedToPostgres) {
+      return this.createInMemory(id, order);
+    }
 
     try {
       const client = await pool.connect();
@@ -89,31 +93,37 @@ export class OrderRepository {
       } finally {
         client.release();
       }
-    } catch (err: any) {
-      console.warn('OrderRepository.create fallback:', err.message);
-      const newOrder: Order = {
-        id,
-        customerName: order.customerName || 'Customer',
-        customerEmail: order.customerEmail || 'user@example.com',
-        customerPhone: order.customerPhone,
-        shippingAddress: order.shippingAddress || '123 Main St',
-        city: order.city || 'Tech City',
-        postalCode: order.postalCode || '10001',
-        totalAmount: order.totalAmount || 0,
-        discountAmount: order.discountAmount || 0,
-        shippingFee: order.shippingFee || 0,
-        paymentMethod: order.paymentMethod || 'Credit Card',
-        paymentStatus: order.paymentStatus || 'Paid',
-        orderStatus: (order.orderStatus as any) || 'Processing',
-        createdAt: new Date().toISOString(),
-        items: order.items || [],
-      };
-      inMemoryOrders.unshift(newOrder);
-      return newOrder;
+    } catch {
+      return this.createInMemory(id, order);
     }
   }
 
+  private static createInMemory(id: string, order: Partial<Order>): Order {
+    const newOrder: Order = {
+      id,
+      customerName: order.customerName || 'Customer',
+      customerEmail: order.customerEmail || 'user@example.com',
+      customerPhone: order.customerPhone,
+      shippingAddress: order.shippingAddress || '123 Main St',
+      city: order.city || 'Tech City',
+      postalCode: order.postalCode || '10001',
+      totalAmount: order.totalAmount || 0,
+      discountAmount: order.discountAmount || 0,
+      shippingFee: order.shippingFee || 0,
+      paymentMethod: order.paymentMethod || 'Credit Card',
+      paymentStatus: order.paymentStatus || 'Paid',
+      orderStatus: (order.orderStatus as any) || 'Processing',
+      createdAt: new Date().toISOString(),
+      items: order.items || [],
+    };
+    inMemoryOrders.unshift(newOrder);
+    return newOrder;
+  }
+
   static async findById(id: string): Promise<Order | null> {
+    if (!isConnectedToPostgres) {
+      return inMemoryOrders.find((o) => o.id === id) || null;
+    }
     try {
       const orderRes = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
       if (orderRes.rows.length === 0) return null;
@@ -130,13 +140,15 @@ export class OrderRepository {
       }));
 
       return mapRowToOrder(orderRes.rows[0], items);
-    } catch (err: any) {
-      console.warn('OrderRepository.findById fallback:', err.message);
+    } catch {
       return inMemoryOrders.find((o) => o.id === id) || null;
     }
   }
 
   static async findAll(): Promise<Order[]> {
+    if (!isConnectedToPostgres) {
+      return inMemoryOrders;
+    }
     try {
       const orderRes = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
       const orders: Order[] = [];
@@ -155,17 +167,25 @@ export class OrderRepository {
         orders.push(mapRowToOrder(row, items));
       }
       return orders;
-    } catch (err: any) {
+    } catch {
       return inMemoryOrders;
     }
   }
 
   static async updateStatus(id: string, status: string): Promise<Order | null> {
+    if (!isConnectedToPostgres) {
+      const o = inMemoryOrders.find((x) => x.id === id);
+      if (o) {
+        o.orderStatus = status as any;
+        return o;
+      }
+      return null;
+    }
     try {
       const res = await pool.query('UPDATE orders SET order_status = $1 WHERE id = $2 RETURNING *', [status, id]);
       if (res.rows.length === 0) return null;
       return mapRowToOrder(res.rows[0]);
-    } catch (err: any) {
+    } catch {
       const o = inMemoryOrders.find((x) => x.id === id);
       if (o) {
         o.orderStatus = status as any;
@@ -176,11 +196,15 @@ export class OrderRepository {
   }
 
   static async count(): Promise<number> {
+    if (!isConnectedToPostgres) {
+      return inMemoryOrders.length;
+    }
     try {
       const res = await pool.query('SELECT COUNT(*) FROM orders');
       return parseInt(res.rows[0].count, 10);
-    } catch (err) {
+    } catch {
       return inMemoryOrders.length;
     }
   }
 }
+

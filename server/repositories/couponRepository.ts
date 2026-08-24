@@ -1,4 +1,4 @@
-import { pool } from '../db.js';
+import { pool, isConnectedToPostgres } from '../db.js';
 import { Coupon } from '../../src/types.js';
 
 let inMemoryCoupons: Coupon[] = [
@@ -27,6 +27,9 @@ let inMemoryCoupons: Coupon[] = [
 
 export class CouponRepository {
   static async findByCode(code: string): Promise<Coupon | null> {
+    if (!isConnectedToPostgres) {
+      return inMemoryCoupons.find((c) => c.code.toUpperCase() === code.toUpperCase() && c.isActive) || null;
+    }
     try {
       const res = await pool.query('SELECT * FROM coupons WHERE UPPER(code) = UPPER($1) AND is_active = TRUE', [code]);
       if (res.rows.length === 0) return null;
@@ -38,12 +41,15 @@ export class CouponRepository {
         minOrder: row.min_order ? parseFloat(row.min_order) : 0,
         isActive: row.is_active,
       };
-    } catch (err: any) {
+    } catch {
       return inMemoryCoupons.find((c) => c.code.toUpperCase() === code.toUpperCase() && c.isActive) || null;
     }
   }
 
   static async findAll(): Promise<Coupon[]> {
+    if (!isConnectedToPostgres) {
+      return inMemoryCoupons;
+    }
     try {
       const res = await pool.query('SELECT * FROM coupons WHERE is_active = TRUE');
       return res.rows.map((row) => ({
@@ -53,17 +59,21 @@ export class CouponRepository {
         minOrder: row.min_order ? parseFloat(row.min_order) : 0,
         isActive: row.is_active,
       }));
-    } catch (err: any) {
+    } catch {
       return inMemoryCoupons;
     }
   }
 
   static async count(): Promise<number> {
+    if (!isConnectedToPostgres) {
+      return inMemoryCoupons.length;
+    }
     try {
       const res = await pool.query('SELECT COUNT(*) FROM coupons');
       return parseInt(res.rows[0].count, 10);
-    } catch (err) {
+    } catch {
       return inMemoryCoupons.length;
     }
   }
 }
+

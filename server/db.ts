@@ -15,8 +15,15 @@ export const pool = new Pool({
   ssl: {
     rejectUnauthorized: false,
   },
-  connectionTimeoutMillis: 10000,
-  max: 10,
+  connectionTimeoutMillis: 3000,
+  idleTimeoutMillis: 5000,
+  max: 5,
+});
+
+// Suppress unhandled pool error events to prevent node crashes
+pool.on('error', (err) => {
+  isConnectedToPostgres = false;
+  lastDbError = err.message;
 });
 
 export let isConnectedToPostgres = false;
@@ -25,8 +32,15 @@ export let lastDbError: string | null = null;
 // Initialize tables and seed initial catalog data
 export async function initDatabase() {
   try {
-    const client = await pool.connect();
-    console.log(' Successfully connected to Supabase PostgreSQL database!');
+    // Attempt quick connection check
+    const client = await Promise.race([
+      pool.connect(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('PostgreSQL connection timeout (3000ms)')), 3000)
+      ),
+    ]);
+
+    console.log(' Connected to PostgreSQL database.');
     isConnectedToPostgres = true;
     lastDbError = null;
 
@@ -123,7 +137,6 @@ export async function initDatabase() {
     // Check if initial categories exist
     const catCountRes = await client.query('SELECT COUNT(*) FROM categories');
     if (parseInt(catCountRes.rows[0].count, 10) === 0) {
-      console.log('Seeding initial categories...');
       await client.query(`
         INSERT INTO categories (id, name, slug, icon, description, image_url) VALUES
         ('electronics', 'Electronics & Audio', 'electronics', 'Headphones', 'Premium sound systems, noise-canceling headphones & hi-fi gear', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80'),
@@ -139,7 +152,6 @@ export async function initDatabase() {
     // Check if initial products exist
     const prodCountRes = await client.query('SELECT COUNT(*) FROM products');
     if (parseInt(prodCountRes.rows[0].count, 10) === 0) {
-      console.log('Seeding initial products...');
       await client.query(`
         INSERT INTO products (id, title, slug, description, price, original_price, rating, reviews_count, stock, category_id, brand, images, features, badge) VALUES
         ('prod-1', 'Aura Sound Pro Wireless Noise-Cancelling Headphones', 'aura-sound-pro-headphones', 'Engineered with custom 40mm beryllium drivers, active hybrid noise cancellation, 45-hour battery life, and ultra-plush memory foam earcups.', 349.99, 399.99, 4.9, 128, 24, 'electronics', 'Acoustica', ARRAY['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&auto=format&fit=crop&q=80'], ARRAY['Hybrid Active Noise Cancellation (42dB)', '45-Hour Playback with Fast Charge (10m = 5h)', 'Lossless Spatial Audio with Head Tracking', 'Multipoint Bluetooth 5.4 Connectivity'], 'Best Seller'),
@@ -179,10 +191,11 @@ export async function initDatabase() {
     }
 
     client.release();
-    console.log(' Database initialized and seeded successfully.');
+    console.log(' Database initialized and ready.');
   } catch (err: any) {
-    console.error('Database connection / initialization error:', err.message);
-    lastDbError = err.message;
+    console.log(`ℹ️ Running in resilient local storage mode (Database notice: ${err.message || 'Offline'})`);
+    lastDbError = err.message || 'Database unavailable';
     isConnectedToPostgres = false;
   }
 }
+

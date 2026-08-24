@@ -1,5 +1,4 @@
 import React from 'react';
-import { Headphones, Laptop, Home, Watch, Camera, Smartphone, LayoutGrid } from 'lucide-react';
 import { Category } from '../types';
 
 interface CategoryFilterProps {
@@ -9,31 +8,6 @@ interface CategoryFilterProps {
   totalProductsCount: number;
 }
 
-const getCategoryIcon = (slugOrIcon?: string) => {
-  switch (slugOrIcon?.toLowerCase()) {
-    case 'electronics':
-    case 'headphones':
-      return <Headphones className="w-4 h-4" />;
-    case 'laptops':
-    case 'laptop':
-      return <Laptop className="w-4 h-4" />;
-    case 'smart-home':
-    case 'home':
-      return <Home className="w-4 h-4" />;
-    case 'wearables':
-    case 'watch':
-      return <Watch className="w-4 h-4" />;
-    case 'cameras':
-    case 'camera':
-      return <Camera className="w-4 h-4" />;
-    case 'accessories':
-    case 'smartphone':
-      return <Smartphone className="w-4 h-4" />;
-    default:
-      return <LayoutGrid className="w-4 h-4" />;
-  }
-};
-
 export const CategoryFilter: React.FC<CategoryFilterProps> = ({
   categories,
   selectedCategory,
@@ -41,28 +15,27 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
   totalProductsCount,
 }) => {
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-          Browse Categories
+    <div className="mb-10">
+      <div className="flex items-center justify-between mb-4 border-b border-[#f0f0f0] pb-2.5">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#111111]">
+          Index / Categories
         </h2>
-        <span className="text-xs text-zinc-500 font-medium">
-          {totalProductsCount} products available
+        <span className="text-[11px] text-[#999999] tracking-wider font-mono">
+          ({totalProductsCount} objects)
         </span>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+      <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-none">
         <button
           id="category-pill-all"
           onClick={() => onSelectCategory('all')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition border ${
+          className={`px-4 py-2 text-xs uppercase tracking-widest transition rounded-none font-medium whitespace-nowrap border ${
             selectedCategory === 'all'
-              ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
-              : 'bg-white text-zinc-700 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+              ? 'bg-[#111111] text-white border-[#111111]'
+              : 'bg-[#ffffff] text-[#666666] border-[#f0f0f0] hover:border-[#cccccc] hover:text-[#111111]'
           }`}
         >
-          <LayoutGrid className="w-4 h-4" />
-          <span>All Products</span>
+          All Objects
         </button>
 
         {categories.map((cat) => {
@@ -72,14 +45,13 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
               id={`category-pill-${cat.id}`}
               key={cat.id}
               onClick={() => onSelectCategory(cat.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition border ${
+              className={`px-4 py-2 text-xs uppercase tracking-widest transition rounded-none font-medium whitespace-nowrap border ${
                 isSelected
-                  ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
-                  : 'bg-white text-zinc-700 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                  ? 'bg-[#111111] text-white border-[#111111]'
+                  : 'bg-[#ffffff] text-[#666666] border-[#f0f0f0] hover:border-[#cccccc] hover:text-[#111111]'
               }`}
             >
-              {getCategoryIcon(cat.icon || cat.slug)}
-              <span>{cat.name}</span>
+              {cat.name}
             </button>
           );
         })}
@@ -87,3 +59,4 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
     </div>
   );
 };
+

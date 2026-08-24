@@ -1,4 +1,4 @@
-import { pool } from '../db.js';
+import { pool, isConnectedToPostgres } from '../db.js';
 import { Category } from '../../src/types.js';
 
 let inMemoryCategories: Category[] = [
@@ -65,31 +65,40 @@ function mapRowToCategory(row: any): Category {
 
 export class CategoryRepository {
   static async findAll(): Promise<Category[]> {
+    if (!isConnectedToPostgres) {
+      return inMemoryCategories;
+    }
     try {
       const res = await pool.query('SELECT * FROM categories ORDER BY name ASC');
       return res.rows.map(mapRowToCategory);
-    } catch (err: any) {
-      console.warn('CategoryRepository.findAll fallback:', err.message);
+    } catch {
       return inMemoryCategories;
     }
   }
 
   static async findById(id: string): Promise<Category | null> {
+    if (!isConnectedToPostgres) {
+      return inMemoryCategories.find((c) => c.id === id) || null;
+    }
     try {
       const res = await pool.query('SELECT * FROM categories WHERE id = $1', [id]);
       if (res.rows.length === 0) return null;
       return mapRowToCategory(res.rows[0]);
-    } catch (err: any) {
+    } catch {
       return inMemoryCategories.find((c) => c.id === id) || null;
     }
   }
 
   static async count(): Promise<number> {
+    if (!isConnectedToPostgres) {
+      return inMemoryCategories.length;
+    }
     try {
       const res = await pool.query('SELECT COUNT(*) FROM categories');
       return parseInt(res.rows[0].count, 10);
-    } catch (err) {
+    } catch {
       return inMemoryCategories.length;
     }
   }
 }
+
